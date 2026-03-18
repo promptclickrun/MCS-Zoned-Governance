@@ -1390,7 +1390,7 @@
         <h2 class="section-title" id="quiz-title">
           <span style="margin-right: 10px;">✦</span>Find Your Zone
         </h2>
-        <p class="section-desc">Answer four questions to determine which governance zone fits your agent.</p>
+        <p class="section-desc">Answer ten quick questions to determine which governance zone fits your agent. Each question maps to a key area of Power Platform governance.</p>
       </div>
 
       <div class="quiz-container">
@@ -1400,7 +1400,7 @@
           <div class="quiz-progress-wrapper" id="quizProgressWrapper">
             <div class="quiz-progress-label">
               <span class="quiz-progress-text">Progress</span>
-              <span class="quiz-progress-step" id="quizProgressStep">Question 1 of 4</span>
+              <span class="quiz-progress-step" id="quizProgressStep">Question 1 of 10</span>
             </div>
             <div class="quiz-progress-bar">
               <div class="quiz-progress-fill" id="quizProgressFill"></div>
@@ -1419,6 +1419,7 @@
             <div class="confetti-container" id="confettiContainer"></div>
             <div class="quiz-result-icon" id="resultIcon"></div>
             <div class="quiz-result-zone" id="resultZone"></div>
+            <div id="resultScoreCtx" style="text-align:center;font-size:0.75rem;font-weight:600;color:var(--text-muted);letter-spacing:0.04em;margin-bottom:10px;"></div>
             <div class="quiz-result-title" id="resultTitle"></div>
             <p class="quiz-result-desc" id="resultDesc"></p>
             <div class="result-banner" id="resultBanner">
@@ -1593,23 +1594,73 @@
     const questions = [
       {
         id: 1,
-        text: "Will this agent be shared beyond your personal use?",
-        hint: "Consider if anyone else will interact with or rely on this agent."
+        text: "Will this agent be used by anyone beyond yourself or your immediate team?",
+        hint: "Think about whether colleagues, a department, or the broader organization will rely on it.",
+        category: "Scope",
+        weight: 1
       },
       {
         id: 2,
-        text: "Will it require external connectors or APIs outside Microsoft 365?",
-        hint: "Examples: third-party services, REST APIs, non-M365 data sources."
+        text: "Will it connect to data sources outside Microsoft 365?",
+        hint: "Examples: third-party REST APIs, external databases, SaaS platforms, or custom line-of-business systems.",
+        category: "Connectivity",
+        weight: 1
       },
       {
         id: 3,
-        text: "Will it be shared with more than 50 people or a full department?",
-        hint: "Consider the total audience size, including indirect users."
+        text: "Will it use custom connectors or premium Power Platform connectors?",
+        hint: "Custom connectors are built by your org. Premium connectors include Dataverse, HTTP, SQL Server, and others requiring a premium license.",
+        category: "Connectors",
+        weight: 1
       },
       {
         id: 4,
-        text: "Will it be published org-wide, to the tenant catalog, or use autonomous actions?",
-        hint: "Autonomous actions include write operations, scheduled tasks, or multi-agent workflows."
+        text: "Does this agent access or process sensitive data — such as PII, financial records, health information, or confidential business data?",
+        hint: "Consider data classification labels (Confidential, Highly Confidential) and any regulatory implications.",
+        category: "Data Sensitivity",
+        weight: 3
+      },
+      {
+        id: 5,
+        text: "Will this agent be shared with more than 50 users or serve an entire department?",
+        hint: "Consider both direct users and anyone downstream who relies on this agent's outputs.",
+        category: "Scale",
+        weight: 2
+      },
+      {
+        id: 6,
+        text: "Can this agent perform actions autonomously — such as writing data, sending emails, or triggering workflows — without human approval each time?",
+        hint: "Agents with write access or automated triggers carry higher governance requirements than read-only agents.",
+        category: "Autonomy",
+        weight: 3
+      },
+      {
+        id: 7,
+        text: "Will people outside your organization interact with this agent?",
+        hint: "External-facing agents (partners, customers, vendors) introduce additional security and compliance considerations.",
+        category: "External Access",
+        weight: 2
+      },
+      {
+        id: 8,
+        text: "Is this agent subject to specific regulatory or compliance requirements?",
+        hint: "Examples: GDPR, HIPAA, SOX, FedRAMP, industry-specific mandates, or internal compliance frameworks.",
+        category: "Compliance",
+        weight: 3
+      },
+      {
+        id: 9,
+        text: "Will this agent orchestrate other agents or be part of a multi-agent workflow?",
+        hint: "Multi-agent orchestration increases complexity and requires careful coordination of permissions and data flows.",
+        category: "Architecture",
+        weight: 2
+      },
+      {
+        id: 10,
+        text: "Will this agent be published to the tenant app catalog or deployed organization-wide?",
+        hint: "Tenant catalog or org-wide publishing means broad visibility and requires IT governance approval.",
+        category: "Distribution",
+        weight: 3
       }
     ];
 
@@ -1624,43 +1675,59 @@
           "Build in your personal Developer environment",
           "Use M365-native data connectors (SharePoint, Dataverse, Teams)",
           "Share within your workgroup using standard sharing controls",
-          "Document your agent's purpose and data usage",
-          "Reassess zone classification if scope expands"
+          "Follow your org's default DLP policies — no custom policies needed",
+          "Document your agent's purpose and data sources for future reference",
+          "Reassess zone classification if scope, data, or audience expands"
         ]
       },
       amber: {
         zone: "Zone 2 — Yellow Zone",
         title: "Guided Development",
         icon: "⚠️",
-        desc: "Your agent is in the Yellow Zone. IT guidance is needed as your agent moves beyond personal use into departmental or expanded scenarios.",
-        banner: "Connect with your IT team before deploying broadly. Custom DLP policies and environment configuration will be needed.",
+        desc: "Your agent is in the Yellow Zone. IT guidance is needed as your agent moves beyond personal use into departmental or expanded scenarios. Your answers flagged elevated risk in one or more governance areas.",
+        banner: "Connect with your IT team or Center of Excellence before deploying broadly. Environment setup, DLP policies, and connector approvals will likely be needed.",
         steps: [
-          "Engage your IT team or Center of Excellence early",
+          "Engage your IT team or Center of Excellence early in development",
           "Request a Sandbox or approved Production environment",
-          "Work with IT to define and apply DLP policies",
-          "Document external connectors and data flows",
-          "Plan a lightweight review before departmental rollout",
-          "Establish a support and ownership model"
+          "Work with IT to define and apply custom DLP policies",
+          "Document all external connectors, data flows, and integration points",
+          "Conduct a lightweight security and data classification review",
+          "Plan a rollout strategy with defined support and ownership",
+          "Set up basic monitoring and usage analytics"
         ]
       },
       red: {
         zone: "Zone 3 — Red Zone",
         title: "IT Managed",
         icon: "🔐",
-        desc: "Your agent requires the Red Zone — full IT-managed governance. Enterprise reach, autonomous capabilities, or sensitive data access demands a rigorous lifecycle approach.",
-        banner: "IT ownership is required. Submit for formal review and engage the full ALM pipeline before any deployment.",
+        desc: "Your agent requires the Red Zone — full IT-managed governance. Your answers indicate enterprise-level reach, autonomous capabilities, sensitive data, compliance obligations, or complex architecture that demand a rigorous lifecycle approach.",
+        banner: "IT ownership is required. Submit for formal review and engage the full ALM pipeline before any deployment. Do not publish until all reviews are complete.",
         steps: [
           "Transfer ownership to IT or an approved pro-dev team",
-          "Stand up a formal Dev → Test → Prod ALM pipeline",
-          "Complete Privacy, RAI, SDL, and Threat Modeling reviews",
-          "Obtain IT sign-off before production deployment",
-          "Publish to tenant catalog only after governance approval",
-          "Establish ongoing monitoring, incident response, and change management"
+          "Stand up a formal Dev → Test → Prod ALM pipeline with solution management",
+          "Complete Privacy, Responsible AI, SDL, and Threat Modeling reviews",
+          "Define and enforce environment-specific DLP and security policies",
+          "Conduct compliance review for applicable regulations (GDPR, HIPAA, etc.)",
+          "Obtain IT sign-off and governance board approval before production deployment",
+          "Publish to tenant catalog only after all governance gates pass",
+          "Establish ongoing monitoring, incident response, and change management processes"
         ]
       }
     };
 
     let currentQuestion = 0;
+    let totalScore = 0;
+
+    // Zone thresholds (weighted scoring)
+    // Green: 0–3  |  Yellow: 4–7  |  Red: 8+
+    const ZONE_YELLOW_MIN = 4;
+    const ZONE_RED_MIN = 8;
+
+    function getZoneFromScore(score) {
+      if (score >= ZONE_RED_MIN) return 'red';
+      if (score >= ZONE_YELLOW_MIN) return 'amber';
+      return 'green';
+    }
 
     function renderQuestion(index) {
       const q = questions[index];
@@ -1678,7 +1745,10 @@
 
       setTimeout(() => {
         content.innerHTML = `
-          <div class="quiz-question-number">Question ${q.id} of ${questions.length}</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+            <div class="quiz-question-number" style="margin-bottom:0;">Question ${q.id} of ${questions.length}</div>
+            <span style="font-size:0.65rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:3px 10px;border-radius:100px;background:var(--blue-dim);color:var(--blue);border:1px solid rgba(59,130,246,0.25);">${q.category}</span>
+          </div>
           <div class="quiz-question-text">${q.text}</div>
           <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:24px;font-style:italic;">${q.hint}</p>
           <div class="quiz-buttons">
@@ -1701,36 +1771,19 @@
     }
 
     function handleAnswer(isYes) {
-      const q = currentQuestion;
+      const q = questions[currentQuestion];
 
-      // Decision tree logic
-      if (q === 0) {
-        if (!isYes) {
-          showResult('green');
-          return;
-        }
-      } else if (q === 1) {
-        if (!isYes) {
-          showResult('green');
-          return;
-        }
-      } else if (q === 2) {
-        if (!isYes) {
-          showResult('amber');
-          return;
-        }
-      } else if (q === 3) {
-        if (!isYes) {
-          showResult('amber');
-        } else {
-          showResult('red');
-        }
-        return;
+      if (isYes) {
+        totalScore += q.weight;
       }
 
       currentQuestion++;
+
       if (currentQuestion < questions.length) {
         renderQuestion(currentQuestion);
+      } else {
+        // All questions answered — determine zone from total score
+        showResult(getZoneFromScore(totalScore));
       }
     }
 
@@ -1761,6 +1814,13 @@
         document.getElementById('resultTitle').textContent = r.title;
         document.getElementById('resultDesc').textContent = r.desc;
         document.getElementById('resultBannerText').textContent = r.banner;
+
+        // Show score context
+        const maxScore = questions.reduce((sum, q) => sum + q.weight, 0);
+        const scoreCtx = document.getElementById('resultScoreCtx');
+        if (scoreCtx) {
+          scoreCtx.textContent = `Risk score: ${totalScore} of ${maxScore} — ${totalScore < ZONE_YELLOW_MIN ? 'Low risk' : totalScore < ZONE_RED_MIN ? 'Moderate risk' : 'High risk'}`;
+        }
 
         const stepsList = document.getElementById('resultSteps');
         stepsList.innerHTML = r.steps.map((s, i) => `
@@ -1809,6 +1869,7 @@
 
     function restartQuiz() {
       currentQuestion = 0;
+      totalScore = 0;
       const resultEl = document.getElementById('quizResult');
       const questionArea = document.getElementById('quizQuestionArea');
       const progressWrapper = document.getElementById('quizProgressWrapper');
